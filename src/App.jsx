@@ -55,6 +55,7 @@ export default function GemaserVarillaApp() {
     },
   ];
 
+  const [showSplash, setShowSplash] = useState(true);
   const [precioTonelada, setPrecioTonelada] = useState(FALLBACK_PRICE);
   const [lastUpdated, setLastUpdated] = useState("");
   const [priceLoading, setPriceLoading] = useState(false);
@@ -70,8 +71,17 @@ export default function GemaserVarillaApp() {
       e.preventDefault();
       setInstallPrompt(e);
     };
+
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 1400);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const cargarPrecioRemoto = async () => {
@@ -108,10 +118,12 @@ export default function GemaserVarillaApp() {
   }, []);
 
   const seguro = useMemo(() => precioTonelada * 0.0015, [precioTonelada]);
+
   const subtotalTon = useMemo(
     () => precioTonelada + seguro,
     [precioTonelada, seguro]
   );
+
   const precioFinalTon = useMemo(() => subtotalTon * 1.16, [subtotalTon]);
 
   const items = useMemo(() => {
@@ -142,14 +154,17 @@ export default function GemaserVarillaApp() {
       setQuantities((prev) => ({ ...prev, [id]: "" }));
       return;
     }
+
     const normalized = value.replace(",", ".");
     if (!/^\d*\.?\d*$/.test(normalized)) return;
+
     setQuantities((prev) => ({ ...prev, [id]: normalized }));
   };
 
   const changeQty = (id, delta) => {
     const current = Number(quantities[id] || 0);
     const next = Math.max(0, Math.round((current + delta) * 100) / 100);
+
     setQuantities((prev) => ({
       ...prev,
       [id]: next === 0 ? "" : String(next),
@@ -166,7 +181,9 @@ export default function GemaserVarillaApp() {
     const lines = selectedItems.length
       ? selectedItems.map(
           (i) =>
-            `• ${i.descripcion} (${i.calibre}): ${formatNumber(i.toneladas)} ton = ${money(i.total)}`
+            `• ${i.descripcion} (${i.calibre}): ${formatNumber(
+              i.toneladas
+            )} ton = ${money(i.total)}`
         )
       : ["• Sin productos seleccionados"];
 
@@ -232,10 +249,11 @@ export default function GemaserVarillaApp() {
   const instalarApp = async () => {
     if (!installPrompt) {
       setShareStatus(
-        "En algunos celulares puedes instalarla desde el menú del navegador: Agregar a pantalla de inicio."
+        "Si no aparece la instalación automática, usa el menú del navegador y selecciona 'Agregar a pantalla de inicio'."
       );
       return;
     }
+
     installPrompt.prompt();
     await installPrompt.userChoice;
     setInstallPrompt(null);
@@ -245,17 +263,41 @@ export default function GemaserVarillaApp() {
     setQuantities(Object.fromEntries(products.map((p) => [p.id, ""])));
   };
 
+  if (showSplash) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f6f2]">
+        <div className="flex flex-col items-center gap-4">
+          <img
+            src={LOGO_URL}
+            alt="GEMASER"
+            className="w-40 h-40 object-contain"
+          />
+          <div className="text-3xl font-black tracking-tight text-[#5f6830]">
+            GEMASER
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f5f6f2_0%,#eef1e8_100%)] text-slate-900 pb-24 md:pb-0">
       <div className="max-w-7xl mx-auto px-4 py-4 md:px-6 md:py-8 space-y-6">
         <div className="sticky top-0 z-50 rounded-2xl border border-[#d8debf] bg-white/95 backdrop-blur px-4 py-3 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-center sm:text-left">
-            <div className="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold">Precio del día</div>
-            <div className="text-xl font-black text-[#5f6830]">{money(precioTonelada)}</div>
+            <div className="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold">
+              Precio del día
+            </div>
+            <div className="text-xl font-black text-[#5f6830]">
+              {money(precioTonelada)}
+            </div>
             {lastUpdated ? (
-              <div className="text-xs text-slate-500">Actualizado: {formatDate(lastUpdated)}</div>
+              <div className="text-xs text-slate-500">
+                Actualizado: {formatDate(lastUpdated)}
+              </div>
             ) : null}
           </div>
+
           <button
             onClick={cargarPrecioRemoto}
             className="w-full sm:w-auto rounded-2xl px-5 py-3 font-bold bg-[#7a8442] text-white shadow-lg hover:opacity-90 transition"
@@ -263,6 +305,7 @@ export default function GemaserVarillaApp() {
             {priceLoading ? "Actualizando precio..." : "Actualizar precio ahora"}
           </button>
         </div>
+
         <section className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/90 shadow-[0_20px_80px_-30px_rgba(15,23,42,0.35)] backdrop-blur">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(122,132,66,0.18),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(15,23,42,0.08),transparent_30%)]" />
           <div className="relative p-5 md:p-8">
@@ -279,7 +322,6 @@ export default function GemaserVarillaApp() {
                     {APP_NAME}
                   </h1>
 
-                  {/* BOTÓN ARRIBA PARA ACTUALIZAR PRECIO */}
                   <button
                     onClick={cargarPrecioRemoto}
                     className="rounded-2xl px-6 py-3 font-bold bg-[#7a8442] text-white shadow-lg hover:scale-105 transition"
@@ -371,6 +413,7 @@ export default function GemaserVarillaApp() {
                     ) : null}
                   </div>
                 </Field>
+
                 <Stat title="Seguro 0.15%" value={money(seguro)} />
                 <Stat title="Subtotal + seguro" value={money(subtotalTon)} />
                 <Stat
@@ -775,4 +818,3 @@ function formatDate(value) {
     timeStyle: "short",
   }).format(date);
 }
-
