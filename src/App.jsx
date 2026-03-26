@@ -813,8 +813,10 @@ function formatNumber(value) {
 function formatDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
+
   return new Intl.DateTimeFormat("es-MX", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "America/Monterrey",
   }).format(date);
 }
