@@ -104,7 +104,8 @@ export default function GemaserVarillaApp() {
       }
 
       setPrecioTonelada(nextPrice);
-      setLastUpdated(data?.actualizado || new Date().toISOString());
+     console.log("actualizado desde supabase:", data?.actualizado);
+     setLastUpdated(data?.actualizado || new Date().toISOString());
     } catch (error) {
       console.error("Error Supabase:", error);
       setPriceError(`Error remoto: ${error?.message || "desconocido"}`);
@@ -811,7 +812,10 @@ function formatNumber(value) {
 }
 
 function formatDate(value) {
+  console.log("valor recibido en formatDate:", value);
   const date = new Date(value);
+  console.log("date interpretada:", date.toString());
+
   if (Number.isNaN(date.getTime())) return value;
 
   return new Intl.DateTimeFormat("es-MX", {
