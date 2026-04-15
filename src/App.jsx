@@ -118,7 +118,7 @@ export default function GemaserVarillaApp() {
     cargarPrecioRemoto();
   }, []);
 
-  const seguro = useMemo(() => precioTonelada * 0.0015, [precioTonelada]);
+  const seguro = useMemo(() => precioTonelada * 0.0020, [precioTonelada]);
 
   const subtotalTon = useMemo(
     () => precioTonelada + seguro,
@@ -192,7 +192,7 @@ export default function GemaserVarillaApp() {
       "NUEVO PEDIDO - GEMASER",
       "",
       `Precio base por tonelada: ${money(precioTonelada)}`,
-      `Seguro 0.15%: ${money(seguro)}`,
+      `Seguro 0.20%: ${money(seguro)}`,
       `Precio con seguro: ${money(subtotalTon)}`,
       `Precio final con IVA 16%: ${money(precioFinalTon)}`,
       "",
