@@ -56,7 +56,7 @@ export default function GemaserVarillaApp() {
       descripcion: "Varilla corrugada 1 pulgada",
       image: "/calibres/1-pulgada.png",
       tag: "Gran calibre",
-      color: "from-slate-500/15 to-slate-500/5",
+      color: "from-amber-500/25 to-yellow-400/10",
       featured: false,
     },
   ];
@@ -433,15 +433,15 @@ export default function GemaserVarillaApp() {
                   <div className={`h-1.5 bg-gradient-to-r ${item.color}`} />
                   <div className="p-4 md:p-5 lg:p-6">
                     <div className="grid md:grid-cols-[220px_1fr_240px] gap-6 items-center">
-                      <div
-                        className={`relative rounded-[24px] border border-slate-200 bg-gradient-to-br ${item.color} p-2`}
-                      >
-                        <img
-                          src={item.image}
-                          alt={item.descripcion}
-                          className="block w-full aspect-[3/2] object-contain rounded-2xl bg-white"
-                          loading="lazy"
-                        />
+                      <div className={`rounded-[24px] border border-slate-200 bg-gradient-to-br ${item.color} p-2`}>
+                        <div className="relative aspect-[3/2] overflow-hidden rounded-2xl bg-white">
+                          <img
+                            src={item.image}
+                            alt={item.descripcion}
+                            className="absolute left-0 top-0 h-[180%] w-[180%] max-w-none object-cover object-left-top"
+                            loading="lazy"
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-3">
