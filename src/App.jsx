@@ -10,7 +10,8 @@ export default function GemaserVarillaApp() {
   const DEST_EMAIL = "drjorgealejandro@hotmail.com";
   const DEST_WHATSAPP = "528441892008";
   const LOGO_URL = "/logo-gemaser.png";
-  const FALLBACK_PRICE = 18500;
+  const FALLBACK_PRICE = 15250;
+  const PRICE_EFFECTIVE_AT = "2026-10-20T17:57:44Z";
 
   const products = [
     {
@@ -20,7 +21,6 @@ export default function GemaserVarillaApp() {
       image: "/calibres/3-8.png",
       tag: "Uso ligero",
       color: "from-violet-500/15 to-violet-500/5",
-      badgeColor: "bg-violet-600",
       featured: false,
     },
     {
@@ -30,7 +30,6 @@ export default function GemaserVarillaApp() {
       image: "/calibres/1-2.png",
       tag: "Alta rotación",
       color: "from-blue-500/15 to-blue-500/5",
-      badgeColor: "bg-blue-600",
       featured: true,
     },
     {
@@ -40,7 +39,6 @@ export default function GemaserVarillaApp() {
       image: "/calibres/5-8.png",
       tag: "Obra estructural",
       color: "from-emerald-500/15 to-emerald-500/5",
-      badgeColor: "bg-emerald-600",
       featured: false,
     },
     {
@@ -50,14 +48,22 @@ export default function GemaserVarillaApp() {
       image: "/calibres/3-4.png",
       tag: "Mayor calibre",
       color: "from-orange-500/15 to-orange-500/5",
-      badgeColor: "bg-orange-600",
+      featured: false,
+    },
+    {
+      id: 5,
+      calibre: '1”',
+      descripcion: "Varilla corrugada 1 pulgada",
+      image: "/calibres/1-pulgada.png",
+      tag: "Gran calibre",
+      color: "from-slate-500/15 to-slate-500/5",
       featured: false,
     },
   ];
 
   const [showSplash, setShowSplash] = useState(true);
   const [precioTonelada, setPrecioTonelada] = useState(FALLBACK_PRICE);
-  const [lastUpdated, setLastUpdated] = useState("");
+  const [lastUpdated, setLastUpdated] = useState(PRICE_EFFECTIVE_AT);
   const [priceLoading, setPriceLoading] = useState(false);
   const [priceError, setPriceError] = useState("");
   const [quantities, setQuantities] = useState(
@@ -103,9 +109,11 @@ export default function GemaserVarillaApp() {
         throw new Error("El precio remoto no es válido.");
       }
 
-      setPrecioTonelada(nextPrice);
-     console.log("actualizado desde supabase:", data?.actualizado);
-     setLastUpdated(data?.actualizado || new Date().toISOString());
+      const remoteUpdatedAt = Date.parse(data?.actualizado || "");
+      if (Number.isFinite(remoteUpdatedAt) && remoteUpdatedAt > Date.parse(PRICE_EFFECTIVE_AT)) {
+        setPrecioTonelada(nextPrice);
+        setLastUpdated(data.actualizado);
+      }
     } catch (error) {
       console.error("Error Supabase:", error);
       setPriceError(`Error remoto: ${error?.message || "desconocido"}`);
@@ -118,14 +126,8 @@ export default function GemaserVarillaApp() {
     cargarPrecioRemoto();
   }, []);
 
-  const seguro = useMemo(() => precioTonelada * 0.0020, [precioTonelada]);
-
-  const subtotalTon = useMemo(
-    () => precioTonelada + seguro,
-    [precioTonelada, seguro]
-  );
-
-  const precioFinalTon = useMemo(() => subtotalTon * 1.16, [subtotalTon]);
+  const ivaTon = useMemo(() => precioTonelada * 0.16, [precioTonelada]);
+  const precioFinalTon = useMemo(() => precioTonelada + ivaTon, [precioTonelada, ivaTon]);
 
   const items = useMemo(() => {
     return products.map((p) => {
@@ -191,9 +193,8 @@ export default function GemaserVarillaApp() {
     return [
       "NUEVO PEDIDO - GEMASER",
       "",
-      `Precio base por tonelada: ${money(precioTonelada)}`,
-      `Seguro 0.20%: ${money(seguro)}`,
-      `Precio con seguro: ${money(subtotalTon)}`,
+      `Precio base por tonelada: ${money(precioTonelada)} más IVA`,
+      `IVA 16% por tonelada: ${money(ivaTon)}`,
       `Precio final con IVA 16%: ${money(precioFinalTon)}`,
       "",
       "Detalle del pedido:",
@@ -205,8 +206,7 @@ export default function GemaserVarillaApp() {
   }, [
     selectedItems,
     precioTonelada,
-    seguro,
-    subtotalTon,
+    ivaTon,
     precioFinalTon,
     totalToneladas,
     totalPedido,
@@ -287,10 +287,10 @@ export default function GemaserVarillaApp() {
         <div className="sticky top-0 z-50 rounded-2xl border border-[#d8debf] bg-white/95 backdrop-blur px-4 py-3 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-center sm:text-left">
             <div className="text-xs uppercase tracking-[0.18em] text-slate-500 font-semibold">
-              Precio del día
+              Precio base por tonelada + IVA
             </div>
             <div className="text-xl font-black text-[#5f6830]">
-              {money(precioTonelada)}
+              {money(precioTonelada)} + IVA
             </div>
             {lastUpdated ? (
               <div className="text-xs text-slate-500">
@@ -360,7 +360,7 @@ export default function GemaserVarillaApp() {
             </div>
 
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <TopMetric title="Precio final ton" value={money(precioFinalTon)} />
+              <TopMetric title="Precio con IVA / ton" value={money(precioFinalTon)} />
               <TopMetric title="Toneladas" value={formatNumber(totalToneladas)} />
               <TopMetric title="Productos" value={String(totalPiezas)} />
               <TopMetric title="Pedido" value={money(totalPedido)} />
@@ -387,8 +387,8 @@ export default function GemaserVarillaApp() {
                 </div>
               </div>
 
-              <div className="mt-5 grid md:grid-cols-4 gap-4">
-                <Field label="Precio base por tonelada">
+              <div className="mt-5 grid md:grid-cols-3 gap-4">
+                <Field label="Precio base por tonelada (más IVA)">
                   <div className="space-y-2">
                     <input
                       type="number"
@@ -415,8 +415,7 @@ export default function GemaserVarillaApp() {
                   </div>
                 </Field>
 
-                <Stat title="Seguro 0.15%" value={money(seguro)} />
-                <Stat title="Subtotal + seguro" value={money(subtotalTon)} />
+                <Stat title="IVA 16% por tonelada" value={money(ivaTon)} />
                 <Stat
                   title="Precio final + IVA"
                   value={money(precioFinalTon)}
@@ -425,7 +424,7 @@ export default function GemaserVarillaApp() {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {items.map((item) => (
                 <article
                   key={item.id}
@@ -433,34 +432,20 @@ export default function GemaserVarillaApp() {
                 >
                   <div className={`h-1.5 bg-gradient-to-r ${item.color}`} />
                   <div className="p-4 md:p-5 lg:p-6">
-                    <div className="grid md:grid-cols-[220px_1fr_240px] gap-5 items-center">
+                    <div className="grid md:grid-cols-[220px_1fr_240px] gap-6 items-center">
                       <div
-                        className={`relative rounded-[24px] border border-slate-200 bg-gradient-to-br ${item.color} p-3`}
+                        className={`relative rounded-[24px] border border-slate-200 bg-gradient-to-br ${item.color} p-2`}
                       >
-                        {item.featured ? (
-                          <div className="absolute left-5 top-5 z-10 rounded-full bg-[#7a8442] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white shadow-lg">
-                            Más vendido
-                          </div>
-                        ) : null}
-
-                        <div
-                          className={`absolute bottom-5 right-5 z-10 rounded-2xl ${item.badgeColor} px-4 py-2 text-lg font-black text-white shadow-xl`}
-                        >
-                          {item.calibre}
-                        </div>
-
                         <img
                           src={item.image}
                           alt={item.descripcion}
-                          className="w-full h-44 object-cover object-bottom-right rounded-2xl bg-white"
+                          className="block w-full aspect-[3/2] object-contain rounded-2xl bg-white"
+                          loading="lazy"
                         />
                       </div>
 
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-flex rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white">
-                            {item.calibre}
-                          </span>
                           <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
                             {item.tag}
                           </span>
@@ -476,7 +461,7 @@ export default function GemaserVarillaApp() {
                             {item.descripcion}
                           </h3>
                           <p className="text-slate-500 mt-1">
-                            Precio calculado automáticamente por tonelada.
+                            Precio con IVA calculado por tonelada.
                           </p>
                         </div>
 
@@ -586,9 +571,8 @@ export default function GemaserVarillaApp() {
                 </div>
 
                 <div className="rounded-3xl bg-white/10 p-4 space-y-3">
-                  <Row title="Base por tonelada" value={money(precioTonelada)} />
-                  <Row title="Seguro 0.15%" value={money(seguro)} />
-                  <Row title="Con seguro" value={money(subtotalTon)} />
+                  <Row title="Precio base por tonelada" value={money(precioTonelada)} />
+                  <Row title="IVA 16% por tonelada" value={money(ivaTon)} />
                   <div className="h-px bg-white/10" />
                   <Row
                     title="Final con IVA"
